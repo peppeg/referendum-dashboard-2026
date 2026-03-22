@@ -1,74 +1,59 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import {
-  referendumInfo,
-  puntiChiave,
-  affluenzaTempoReale as initialAffluenzaTempoReale,
-  affluenzaRegioni as initialAffluenzaRegioni,
-  affluenzaCitta as initialAffluenzaCitta,
-  referendumStorici as initialReferendumStorici,
-  sondaggi,
-  propensionePartiti,
-  affluenzaPerArea as initialAffluenzaPerArea,
-  timelineEventi
-} from "../shared/referendumData";
+  dashboardSeedData,
+  isDashboardData,
+  mergeDashboardData,
+  type DashboardData,
+  type DashboardDataPatch,
+} from "../shared/dashboardData.js";
 
-// In-memory data
-let liveData = {
-  referendumInfo,
-  puntiChiave,
-  affluenzaTempoReale: [...initialAffluenzaTempoReale],
-  affluenzaRegioni: [...initialAffluenzaRegioni],
-  affluenzaCitta: [...initialAffluenzaCitta],
-  referendumStorici: [...initialReferendumStorici],
-  sondaggi,
-  propensionePartiti,
-  affluenzaPerArea: [...initialAffluenzaPerArea],
-  timelineEventi,
-  // Add global projections
-  proiezioneYoodata: 60,
-  proiezioneIpsos: 49
-};
+const LEGACY_MANUAL_TOKEN = "AggiornaSubito2026";
+
+let liveData: DashboardData = dashboardSeedData;
+
+function getRefreshToken() {
+  return process.env.DASHBOARD_REFRESH_TOKEN || LEGACY_MANUAL_TOKEN;
+}
+
+function isAuthorizedRefreshRequest(req: Request) {
+  const expectedToken = getRefreshToken();
+  const bearerHeader = req.header("authorization");
+  const bearerToken = bearerHeader?.startsWith("Bearer ")
+    ? bearerHeader.slice("Bearer ".length)
+    : undefined;
+
+  return req.query.token === expectedToken || bearerToken === expectedToken;
+}
 
 export async function registerRoutes(
   app: Express,
   httpServer?: Server
 ) {
   // Public endpoint for dashboard data
-  app.get("/api/dashboard", (req, res) => {
+  app.get("/api/dashboard", (_req, res) => {
     res.json(liveData);
   });
 
   // Secret endpoint to update data (e.g. POST /api/dashboard?token=SECRET)
   app.post("/api/dashboard", (req, res) => {
-    const token = req.query.token;
-    if (token !== "AggiornaSubito2026") {
+    if (!isAuthorizedRefreshRequest(req)) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    // Merge the incoming JSON with the liveData
-    const payload = req.body;
-    
-    if (payload.affluenzaTempoReale) {
-      liveData.affluenzaTempoReale = payload.affluenzaTempoReale;
-    }
-    if (payload.affluenzaRegioni) {
-      liveData.affluenzaRegioni = payload.affluenzaRegioni;
-    }
-    if (payload.affluenzaCitta) {
-      liveData.affluenzaCitta = payload.affluenzaCitta;
-    }
-    if (payload.affluenzaPerArea) {
-      liveData.affluenzaPerArea = payload.affluenzaPerArea;
-    }
-    if (payload.referendumStorici) {
-      liveData.referendumStorici = payload.referendumStorici;
-    }
-    if (payload.proiezioneYoodata !== undefined) {
-      liveData.proiezioneYoodata = payload.proiezioneYoodata;
+    const payload = req.body as DashboardData | DashboardDataPatch;
+    if (!payload || typeof payload !== "object") {
+      return res.status(400).json({ error: "Invalid payload" });
     }
 
-    res.json({ success: true, liveData });
+    liveData = isDashboardData(payload)
+      ? payload
+      : mergeDashboardData(liveData, payload);
+
+    res.json({
+      success: true,
+      liveData,
+    });
   });
 
   return httpServer || app;

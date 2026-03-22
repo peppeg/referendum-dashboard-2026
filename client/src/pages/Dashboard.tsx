@@ -11,8 +11,8 @@ import {
   Vote, Users, TrendingUp, Clock, MapPin, Scale, Sun, Moon, ChevronDown, ChevronUp,
   AlertCircle, CheckCircle2, XCircle, Timer, Building2, Gavel, Shuffle, SplitSquareVertical,
 } from "lucide-react";
-import { PerplexityAttribution } from "@/components/PerplexityAttribution";
 import { useQuery } from "@tanstack/react-query";
+import type { DashboardData } from "@shared/dashboardData";
 
 function ThemeToggle() {
   const [dark, setDark] = useState(() =>
@@ -81,6 +81,89 @@ const AREA_COLORS: Record<string, string> = {
   "Isole": "hsl(280, 50%, 50%)",
 };
 
+type SeggiStatus = {
+  badgeLabel: string;
+  detail: string;
+  badgeClassName: string;
+  dotClassName: string;
+};
+
+function getRomeDateParts(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Rome",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+
+  const lookup = Object.fromEntries(
+    parts
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value]),
+  );
+
+  return {
+    isoDate: `${lookup.year}-${lookup.month}-${lookup.day}`,
+    minutes: Number(lookup.hour) * 60 + Number(lookup.minute),
+  };
+}
+
+function getSeggiStatus(date = new Date()): SeggiStatus {
+  const { isoDate, minutes } = getRomeDateParts(date);
+  const openMorning = 7 * 60;
+  const closeSunday = 23 * 60;
+  const closeMonday = 15 * 60;
+
+  if (isoDate < "2026-03-22" || (isoDate === "2026-03-22" && minutes < openMorning)) {
+    return {
+      badgeLabel: "Seggi chiusi",
+      detail: "Apertura dom 22 marzo alle 07:00",
+      badgeClassName: "text-xs gap-1 border-amber-300 text-amber-700 bg-amber-50",
+      dotClassName: "bg-amber-500",
+    };
+  }
+
+  if (isoDate === "2026-03-22" && minutes < closeSunday) {
+    return {
+      badgeLabel: "Seggi aperti",
+      detail: "Chiusura oggi alle 23:00",
+      badgeClassName: "text-xs gap-1 border-emerald-300 text-emerald-700 bg-emerald-50",
+      dotClassName: "bg-emerald-500 animate-pulse",
+    };
+  }
+
+  if (
+    (isoDate === "2026-03-22" && minutes >= closeSunday) ||
+    (isoDate === "2026-03-23" && minutes < openMorning)
+  ) {
+    return {
+      badgeLabel: "Seggi chiusi",
+      detail: "Riaprono lun 23 marzo alle 07:00",
+      badgeClassName: "text-xs gap-1 border-amber-300 text-amber-700 bg-amber-50",
+      dotClassName: "bg-amber-500",
+    };
+  }
+
+  if (isoDate === "2026-03-23" && minutes < closeMonday) {
+    return {
+      badgeLabel: "Seggi aperti",
+      detail: "Chiusura oggi alle 15:00",
+      badgeClassName: "text-xs gap-1 border-emerald-300 text-emerald-700 bg-emerald-50",
+      dotClassName: "bg-emerald-500 animate-pulse",
+    };
+  }
+
+  return {
+    badgeLabel: "Seggi chiusi",
+    detail: "Scrutinio da lun 23 marzo alle 15:00",
+    badgeClassName: "text-xs gap-1 border-slate-300 text-slate-700 bg-slate-50",
+    dotClassName: "bg-slate-500",
+  };
+}
+
 async function fetchDashboardData() {
   const res = await fetch("/api/dashboard");
   if (!res.ok) throw new Error("Network response was not ok");
@@ -88,13 +171,22 @@ async function fetchDashboardData() {
 }
 
 export default function Dashboard() {
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<DashboardData>({
     queryKey: ["dashboardData"],
     queryFn: fetchDashboardData,
     refetchInterval: 15000,
   });
 
   const [expandedInfo, setExpandedInfo] = useState(false);
+  const [clockTick, setClockTick] = useState(() => Date.now());
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setClockTick(Date.now());
+    }, 30000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-background text-foreground">Caricamento dati in tempo reale...</div>;
@@ -120,11 +212,17 @@ export default function Dashboard() {
   } = data;
 
   const latestAffluenza = affluenzaTempoReale[affluenzaTempoReale.length - 1];
+  const seggiStatus = getSeggiStatus(new Date(clockTick));
+  const latestAffluenzaLabel = latestAffluenza?.label || latestAffluenza?.ora || "N/D";
 
   // Chart data prep
-  const regioniSorted = [...affluenzaRegioni].sort((a, b) => (b.affluenzaOre19 || b.affluenzaOre12) - (a.affluenzaOre19 || a.affluenzaOre12));
+  const regioniSorted = [...affluenzaRegioni].sort(
+    (a, b) =>
+      (b.affluenzaOre23 || b.affluenzaOre19 || b.affluenzaOre12) -
+      (a.affluenzaOre23 || a.affluenzaOre19 || a.affluenzaOre12),
+  );
 
-  const confrontoOre12 = referendumStorici.map((r: any) => ({
+  const confrontoOre12 = referendumStorici.map((r) => ({
     nome: `${r.anno}`,
     label: r.nome,
     affluenza: r.affluenzaOre12Giorno1,
@@ -154,9 +252,9 @@ export default function Dashboard() {
     fill: p.colore,
   }));
 
-  const afflAreaChart = affluenzaPerArea.map((a: any) => ({
+  const afflAreaChart = affluenzaPerArea.map((a) => ({
     area: a.area,
-    affluenza: a.ore19 || a.ore12,
+    affluenza: a.ore23 || a.ore19 || a.ore12,
     fill: AREA_COLORS[a.area] || "#888",
   }));
 
@@ -179,10 +277,11 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block" />
-              Seggi aperti
+            <Badge variant="outline" className={seggiStatus.badgeClassName} title={seggiStatus.detail}>
+              <span className={`w-2 h-2 rounded-full inline-block ${seggiStatus.dotClassName}`} />
+              {seggiStatus.badgeLabel}
             </Badge>
+            <span className="hidden text-xs text-muted-foreground sm:inline">{seggiStatus.detail}</span>
             <ThemeToggle />
           </div>
         </div>
@@ -251,9 +350,9 @@ export default function Dashboard() {
         {/* KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <KpiCard
-            label="Affluenza ore 19"
+            label="Ultima affluenza"
             value={`${latestAffluenza.percentuale}%`}
-            sublabel={`Ore ${latestAffluenza.ora} — Dom 22 Mar | 61.533 sezioni`}
+            sublabel={`${latestAffluenzaLabel} | ${latestAffluenza.sezioniPervenute.toLocaleString("it-IT")} sezioni`}
             icon={Vote}
             trend="up"
           />
@@ -318,7 +417,7 @@ export default function Dashboard() {
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
-                    <MapPin className="w-4 h-4" /> Affluenza per area (ore 19)
+                    <MapPin className="w-4 h-4" /> Affluenza per area (ultimo dato)
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -357,6 +456,7 @@ export default function Dashboard() {
                       <th className="text-left py-2 px-2 font-semibold text-muted-foreground">Area</th>
                       <th className="text-right py-2 px-2 font-semibold text-muted-foreground">Ore 12</th>
                       <th className="text-right py-2 px-2 font-semibold text-muted-foreground">Ore 19</th>
+                      <th className="text-right py-2 px-2 font-semibold text-muted-foreground">Ore 23</th>
                       <th className="py-2 px-2 font-semibold text-muted-foreground text-left" style={{ width: "30%" }}>Barra</th>
                     </tr>
                   </thead>
@@ -374,12 +474,15 @@ export default function Dashboard() {
                         <td className="py-1.5 px-2 text-right tabular-nums font-semibold">
                           {r.affluenzaOre19 ? `${r.affluenzaOre19}%` : "—"}
                         </td>
+                        <td className="py-1.5 px-2 text-right tabular-nums font-semibold">
+                          {r.affluenzaOre23 ? `${r.affluenzaOre23}%` : "—"}
+                        </td>
                         <td className="py-1.5 px-2">
                           <div className="w-full bg-secondary rounded-full h-2">
                             <div
                               className="h-2 rounded-full transition-all"
                               style={{
-                                width: `${Math.min((r.affluenzaOre19 || r.affluenzaOre12) / 50 * 100, 100)}%`,
+                                width: `${Math.min((r.affluenzaOre23 || r.affluenzaOre19 || r.affluenzaOre12) / 60 * 100, 100)}%`,
                                 backgroundColor: AREA_COLORS[r.area],
                               }}
                             />
@@ -395,7 +498,7 @@ export default function Dashboard() {
             {/* Affluenza città */}
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Principali città — Ore 12 e Ore 19</CardTitle>
+                <CardTitle className="text-sm">Principali città — Ore 12, Ore 19 e Ore 23</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -406,6 +509,7 @@ export default function Dashboard() {
                     <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
                     <Bar dataKey="affluenzaOre12" name="Ore 12" fill="hsl(var(--chart-1))" fillOpacity={0.4} radius={[4, 4, 0, 0]} />
                     <Bar dataKey="affluenzaOre19" name="Ore 19" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="affluenzaOre23" name="Ore 23" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -568,7 +672,7 @@ export default function Dashboard() {
                   <div className="mt-3 p-3 rounded-lg bg-secondary/50 space-y-1">
                     <p className="text-xs font-semibold flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Insight chiave</p>
                     <p className="text-[11px] text-muted-foreground">
-                      Con il 38.9% alle ore 19 di domenica, l'affluenza è già vicina allo scenario base Ipsos (42%). Con ancora le ore serali e tutto lunedì mattina, la proiezione Yoodata (~60%) appare realistica. Ad alta affluenza, i sondaggi convergono verso la parità o un leggero vantaggio del Sì.
+                      Alle 23:00 di domenica l'affluenza nazionale è al 46.07%, già oltre lo scenario base Ipsos (42%). Resta ora la finestra di voto di lunedì 23 marzo 2026 dalle 07:00 alle 15:00, prima dell'avvio dello scrutinio.
                     </p>
                   </div>
                 </CardContent>
@@ -650,7 +754,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-3 text-center">
-                  Alle ore 19 l'affluenza è al 38.9%, già più del doppio del 2025. Bologna sfiora il 50%, il Nord supera il 42%. La proiezione Yoodata di ~60% si sta confermando.
+                  Alle 23:00 di domenica l'affluenza è al 46.07%. Lunedì 23 marzo 2026 i seggi riaprono alle 07:00 e chiudono alle 15:00, quando inizierà anche lo scrutinio.
                 </p>
               </CardContent>
             </Card>
@@ -709,8 +813,8 @@ export default function Dashboard() {
         {/* Footer */}
         <footer className="border-t border-border pt-4 pb-6 text-center space-y-2">
           <p className="text-[11px] text-muted-foreground">
-            Dati: Eligendo (Ministero dell'Interno), Ipsos Doxa, YouTrend, Yoodata.
-            Ultimo aggiornamento: 22 Marzo 2026, ore 20:45 CET.
+            Dati: Eligendo (Ministero dell'Interno), Ipsos Doxa, YouTrend, Yoodata.{" "}
+            Ultima rilevazione disponibile: {latestAffluenzaLabel}.
           </p>
           <p className="text-[11px] text-muted-foreground">
             I dati presentati hanno carattere informativo. Per i risultati ufficiali consultare{" "}
@@ -718,7 +822,6 @@ export default function Dashboard() {
               elezioni.interno.gov.it
             </a>
           </p>
-          <PerplexityAttribution />
         </footer>
       </main>
     </div>

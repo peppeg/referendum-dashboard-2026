@@ -50,9 +50,9 @@ export interface AffluenzaRilevazione {
 
 export const affluenzaTempoReale: AffluenzaRilevazione[] = [
   { ora: "12:00", percentuale: 14.92, sezioniPervenute: 61533, sezioniTotali: 61533, label: "Dom 12:00" },
-  { ora: "19:00", percentuale: 38.9, sezioniPervenute: 61533, sezioniTotali: 61533, label: "Dom 19:00" },
+  { ora: "19:00", percentuale: 38.89, sezioniPervenute: 61533, sezioniTotali: 61533, label: "Dom 19:00" },
+  { ora: "23:00", percentuale: 46.07, sezioniPervenute: 61533, sezioniTotali: 61533, label: "Dom 23:00" },
   // I seguenti dati verranno aggiornati man mano
-  // { ora: "23:00", percentuale: 0, sezioniPervenute: 0, sezioniTotali: 61533, label: "Dom 23:00" },
   // { ora: "15:00", percentuale: 0, sezioniPervenute: 0, sezioniTotali: 61533, label: "Lun 15:00" },
 ];
 
@@ -61,30 +61,31 @@ export interface AffluenzaRegione {
   regione: string;
   affluenzaOre12: number;
   affluenzaOre19: number | null;
+  affluenzaOre23: number | null;
   area: "Nord-Ovest" | "Nord-Est" | "Centro" | "Sud" | "Isole";
 }
 
 export const affluenzaRegioni: AffluenzaRegione[] = [
-  { regione: "Emilia-Romagna", affluenzaOre12: 19.44, affluenzaOre19: 46.29, area: "Nord-Est" },
-  { regione: "Lombardia", affluenzaOre12: 17.56, affluenzaOre19: 44.99, area: "Nord-Ovest" },
-  { regione: "Toscana", affluenzaOre12: 16.90, affluenzaOre19: 44.70, area: "Centro" },
-  { regione: "Veneto", affluenzaOre12: 17.06, affluenzaOre19: 43.23, area: "Nord-Est" },
-  { regione: "Friuli Venezia Giulia", affluenzaOre12: 17.86, affluenzaOre19: 42.50, area: "Nord-Est" },
-  { regione: "Umbria", affluenzaOre12: 14.37, affluenzaOre19: 42.13, area: "Centro" },
-  { regione: "Liguria", affluenzaOre12: 17.49, affluenzaOre19: 41.96, area: "Nord-Ovest" },
-  { regione: "Piemonte", affluenzaOre12: 14.42, affluenzaOre19: 41.57, area: "Nord-Ovest" },
-  { regione: "Marche", affluenzaOre12: 15.63, affluenzaOre19: 41.29, area: "Centro" },
-  { regione: "Lazio", affluenzaOre12: 16.28, affluenzaOre19: 41.22, area: "Centro" },
-  { regione: "Abruzzo", affluenzaOre12: 14.07, affluenzaOre19: 39.19, area: "Centro" },
-  { regione: "Valle d'Aosta", affluenzaOre12: 14.80, affluenzaOre19: 37.98, area: "Nord-Ovest" },
-  { regione: "Trentino-Alto Adige", affluenzaOre12: 13.36, affluenzaOre19: 35.10, area: "Nord-Est" },
-  { regione: "Sardegna", affluenzaOre12: 14.07, affluenzaOre19: 33.02, area: "Isole" },
-  { regione: "Molise", affluenzaOre12: 11.48, affluenzaOre19: 32.61, area: "Sud" },
-  { regione: "Puglia", affluenzaOre12: 12.13, affluenzaOre19: 30.96, area: "Sud" },
-  { regione: "Basilicata", affluenzaOre12: 9.84, affluenzaOre19: 30.48, area: "Sud" },
-  { regione: "Campania", affluenzaOre12: 10.95, affluenzaOre19: 29.92, area: "Sud" },
-  { regione: "Calabria", affluenzaOre12: 9.74, affluenzaOre19: 29.34, area: "Sud" },
-  { regione: "Sicilia", affluenzaOre12: 10.02, affluenzaOre19: 28.77, area: "Isole" },
+  { regione: "Emilia-Romagna", affluenzaOre12: 19.44, affluenzaOre19: 46.29, affluenzaOre23: 53.70, area: "Nord-Est" },
+  { regione: "Lombardia", affluenzaOre12: 17.56, affluenzaOre19: 44.97, affluenzaOre23: 51.83, area: "Nord-Ovest" },
+  { regione: "Toscana", affluenzaOre12: 16.90, affluenzaOre19: 44.69, affluenzaOre23: 52.49, area: "Centro" },
+  { regione: "Veneto", affluenzaOre12: 17.06, affluenzaOre19: 43.22, affluenzaOre23: 50.55, area: "Nord-Est" },
+  { regione: "Friuli Venezia Giulia", affluenzaOre12: 17.86, affluenzaOre19: 42.48, affluenzaOre23: 48.55, area: "Nord-Est" },
+  { regione: "Umbria", affluenzaOre12: 14.37, affluenzaOre19: 42.12, affluenzaOre23: 50.11, area: "Centro" },
+  { regione: "Liguria", affluenzaOre12: 17.49, affluenzaOre19: 41.96, affluenzaOre23: 48.18, area: "Nord-Ovest" },
+  { regione: "Piemonte", affluenzaOre12: 14.42, affluenzaOre19: 41.57, affluenzaOre23: 48.94, area: "Nord-Ovest" },
+  { regione: "Marche", affluenzaOre12: 15.63, affluenzaOre19: 41.28, affluenzaOre23: 49.41, area: "Centro" },
+  { regione: "Lazio", affluenzaOre12: 16.28, affluenzaOre19: 41.20, affluenzaOre23: 48.23, area: "Centro" },
+  { regione: "Abruzzo", affluenzaOre12: 14.07, affluenzaOre19: 39.19, affluenzaOre23: 46.56, area: "Centro" },
+  { regione: "Valle d'Aosta", affluenzaOre12: 14.80, affluenzaOre19: 37.98, affluenzaOre23: 44.25, area: "Nord-Ovest" },
+  { regione: "Trentino-Alto Adige", affluenzaOre12: 13.36, affluenzaOre19: 35.09, affluenzaOre23: 41.34, area: "Nord-Est" },
+  { regione: "Sardegna", affluenzaOre12: 14.07, affluenzaOre19: 32.99, affluenzaOre23: 39.09, area: "Isole" },
+  { regione: "Molise", affluenzaOre12: 11.48, affluenzaOre19: 32.61, affluenzaOre23: 39.78, area: "Sud" },
+  { regione: "Puglia", affluenzaOre12: 12.13, affluenzaOre19: 30.96, affluenzaOre23: 39.00, area: "Sud" },
+  { regione: "Basilicata", affluenzaOre12: 9.84, affluenzaOre19: 30.48, affluenzaOre23: 39.88, area: "Sud" },
+  { regione: "Campania", affluenzaOre12: 10.95, affluenzaOre19: 29.89, affluenzaOre23: 37.78, area: "Sud" },
+  { regione: "Calabria", affluenzaOre12: 9.74, affluenzaOre19: 29.34, affluenzaOre23: 35.70, area: "Sud" },
+  { regione: "Sicilia", affluenzaOre12: 10.02, affluenzaOre19: 28.75, affluenzaOre23: 34.94, area: "Isole" },
 ];
 
 // Affluenza principali città
@@ -92,19 +93,20 @@ export interface AffluenzaCitta {
   citta: string;
   affluenzaOre12: number;
   affluenzaOre19: number | null;
+  affluenzaOre23: number | null;
 }
 
 export const affluenzaCitta: AffluenzaCitta[] = [
-  { citta: "Bologna", affluenzaOre12: 21.57, affluenzaOre19: 49.2 },
-  { citta: "Firenze", affluenzaOre12: 20.47, affluenzaOre19: 48.3 },
-  { citta: "Milano", affluenzaOre12: 17.09, affluenzaOre19: 45.7 },
-  { citta: "Venezia", affluenzaOre12: 19.01, affluenzaOre19: 42.9 },
-  { citta: "Roma", affluenzaOre12: 17.83, affluenzaOre19: 42.3 },
-  { citta: "Genova", affluenzaOre12: 18.51, affluenzaOre19: 42.0 },
-  { citta: "Torino", affluenzaOre12: 10.75, affluenzaOre19: 41.1 },
-  { citta: "Bari", affluenzaOre12: 15.62, affluenzaOre19: 32.0 },
-  { citta: "Napoli", affluenzaOre12: 12.15, affluenzaOre19: 29.5 },
-  { citta: "Palermo", affluenzaOre12: 10.70, affluenzaOre19: null },
+  { citta: "Bologna", affluenzaOre12: 21.57, affluenzaOre19: 49.2, affluenzaOre23: 56.74 },
+  { citta: "Firenze", affluenzaOre12: 20.47, affluenzaOre19: 48.3, affluenzaOre23: 56.41 },
+  { citta: "Milano", affluenzaOre12: 17.09, affluenzaOre19: 45.69, affluenzaOre23: 53.22 },
+  { citta: "Venezia", affluenzaOre12: 19.01, affluenzaOre19: 42.96, affluenzaOre23: 49.69 },
+  { citta: "Roma", affluenzaOre12: 17.10, affluenzaOre19: 42.37, affluenzaOre23: 49.50 },
+  { citta: "Genova", affluenzaOre12: 18.41, affluenzaOre19: 42.88, affluenzaOre23: 49.50 },
+  { citta: "Torino", affluenzaOre12: 12.65, affluenzaOre19: 41.13, affluenzaOre23: 49.37 },
+  { citta: "Bari", affluenzaOre12: 13.08, affluenzaOre19: 32.05, affluenzaOre23: 40.80 },
+  { citta: "Napoli", affluenzaOre12: 12.15, affluenzaOre19: 29.47, affluenzaOre23: 37.19 },
+  { citta: "Palermo", affluenzaOre12: 10.70, affluenzaOre19: 30.27, affluenzaOre23: 36.20 },
 ];
 
 // Confronto con referendum precedenti
@@ -225,11 +227,11 @@ export const propensionePartiti: PropensionePartito[] = [
 
 // Affluenza per area geografica (ore 12 e ore 19)
 export const affluenzaPerArea = [
-  { area: "Nord-Est", ore12: 17.7, ore19: 42.8, diff2025: "+9.2" },
-  { area: "Nord-Ovest", ore12: 16.7, ore19: 42.9, diff2025: "+8.5" },
-  { area: "Centro", ore12: 16.2, ore19: 41.5, diff2025: "+7.8" },
-  { area: "Sud", ore12: 11.4, ore19: 30.6, diff2025: "+5.5" },
-  { area: "Isole", ore12: 11.0, ore19: 30.1, diff2025: "+5.2" },
+  { area: "Nord-Est", ore12: 17.7, ore19: 42.8, ore23: 49.8, diff2025: "+9.2" },
+  { area: "Nord-Ovest", ore12: 16.7, ore19: 42.9, ore23: 49.8, diff2025: "+8.5" },
+  { area: "Centro", ore12: 16.2, ore19: 41.5, ore23: 49.0, diff2025: "+7.8" },
+  { area: "Sud", ore12: 11.4, ore19: 30.6, ore23: 38.4, diff2025: "+5.5" },
+  { area: "Isole", ore12: 11.0, ore19: 30.1, ore23: 36.8, diff2025: "+5.2" },
 ];
 
 // Timeline degli eventi chiave
