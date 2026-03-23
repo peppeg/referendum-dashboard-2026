@@ -88,6 +88,23 @@ type SeggiStatus = {
   dotClassName: string;
 };
 
+function formatPercent(value: number | null, digits = 2) {
+  return value === null ? "—" : `${value.toFixed(digits)}%`;
+}
+
+function getWinnerBadgeClass(vincitore: "SI" | "NO" | "PARITA" | "N/D") {
+  switch (vincitore) {
+    case "SI":
+      return "bg-emerald-500/15 text-emerald-700 border-emerald-300";
+    case "NO":
+      return "bg-red-500/15 text-red-700 border-red-300";
+    case "PARITA":
+      return "bg-amber-500/15 text-amber-700 border-amber-300";
+    default:
+      return "bg-secondary text-muted-foreground border-border";
+  }
+}
+
 function getRomeDateParts(date = new Date()) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Rome",
@@ -206,6 +223,8 @@ export default function Dashboard() {
     sondaggi,
     propensionePartiti,
     affluenzaPerArea,
+    risultatiNazionali,
+    risultatiRegionali,
     timelineEventi,
     proiezioneYoodata,
     proiezioneIpsos
@@ -258,6 +277,23 @@ export default function Dashboard() {
     fill: AREA_COLORS[a.area] || "#888",
   }));
 
+  const scrutinioStarted =
+    risultatiNazionali.stato !== "in-attesa" ||
+    risultatiNazionali.sezioniScrutinate > 0;
+
+  const scrutinioPieData = [
+    { name: "Sì", value: risultatiNazionali.siPercentuale ?? 0, fill: "hsl(145, 55%, 38%)" },
+    { name: "No", value: risultatiNazionali.noPercentuale ?? 0, fill: "hsl(0, 72%, 50%)" },
+  ];
+
+  const risultatiRegionaliOrdinati = [...risultatiRegionali].sort((a, b) => {
+    if (b.percentualeSezioniScrutinate !== a.percentualeSezioniScrutinate) {
+      return b.percentualeSezioniScrutinate - a.percentualeSezioniScrutinate;
+    }
+
+    return a.regione.localeCompare(b.regione);
+  });
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -265,11 +301,9 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <svg viewBox="0 0 32 32" className="w-8 h-8" aria-label="Logo Referendum">
-                <rect x="2" y="2" width="28" height="28" rx="4" fill="none" stroke="currentColor" strokeWidth="2"/>
-                <path d="M10 16h12M16 10v12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
-                <circle cx="16" cy="16" r="8" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.3"/>
-              </svg>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Scale className="h-5 w-5" aria-label="Bilancia della giustizia" />
+              </div>
               <div>
                 <h1 className="text-base font-bold leading-tight">Referendum Giustizia 2026</h1>
                 <p className="text-xs text-muted-foreground">Dashboard in tempo reale</p>
@@ -762,7 +796,193 @@ export default function Dashboard() {
 
           {/* TAB RISULTATI */}
           <TabsContent value="risultati" className="space-y-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <KpiCard
+                label="Sì"
+                value={formatPercent(risultatiNazionali.siPercentuale)}
+                sublabel="Quota nazionale aggiornata"
+                icon={CheckCircle2}
+                color="bg-emerald-600"
+              />
+              <KpiCard
+                label="No"
+                value={formatPercent(risultatiNazionali.noPercentuale)}
+                sublabel="Quota nazionale aggiornata"
+                icon={XCircle}
+                color="bg-red-600"
+              />
+              <KpiCard
+                label="Sezioni scrutinate"
+                value={risultatiNazionali.sezioniScrutinate.toLocaleString("it-IT")}
+                sublabel={`su ${risultatiNazionali.sezioniTotali.toLocaleString("it-IT")}`}
+                icon={Vote}
+              />
+              <KpiCard
+                label="% scrutinio"
+                value={`${risultatiNazionali.percentualeSezioniScrutinate.toFixed(2)}%`}
+                sublabel={risultatiNazionali.ultimoAggiornamento || "In attesa dei primi dati"}
+                icon={Timer}
+                trend={scrutinioStarted ? "up" : "neutral"}
+              />
+            </div>
+
             <Card>
+              <CardContent className="p-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold">Monitor scrutinio in tempo reale</p>
+                  <p className="text-sm text-muted-foreground">
+                    La tab è centrata su Sì, No e avanzamento delle sezioni scrutinate.
+                  </p>
+                </div>
+                <Badge
+                  variant="outline"
+                  className={
+                    scrutinioStarted
+                      ? "border-emerald-300 text-emerald-700 bg-emerald-50"
+                      : "border-amber-300 text-amber-700 bg-amber-50"
+                  }
+                >
+                  {scrutinioStarted ? "Scrutinio in corso" : "In attesa dei primi verbali"}
+                </Badge>
+              </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Quadro nazionale</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {scrutinioStarted ? (
+                    <ResponsiveContainer width="100%" height={260}>
+                      <PieChart>
+                        <Pie
+                          data={scrutinioPieData}
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius={60}
+                          outerRadius={95}
+                          paddingAngle={2}
+                        >
+                          {scrutinioPieData.map((entry) => (
+                            <Cell key={entry.name} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value: number) => `${value.toFixed(2)}%`} />
+                        <Legend wrapperStyle={{ fontSize: 12 }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-[260px] flex items-center justify-center rounded-lg border border-dashed border-border bg-secondary/20 px-6 text-center text-sm text-muted-foreground">
+                      Appena arrivano i primi dati di scrutinio, qui vedrai la distribuzione nazionale tra Sì e No.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Avanzamento sezioni scrutinate</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Scrutinio completato</span>
+                      <span className="font-semibold tabular-nums">
+                        {risultatiNazionali.percentualeSezioniScrutinate.toFixed(2)}%
+                      </span>
+                    </div>
+                    <div className="h-3 rounded-full bg-secondary overflow-hidden">
+                      <div
+                        className="h-full bg-primary transition-all"
+                        style={{ width: `${Math.min(risultatiNazionali.percentualeSezioniScrutinate, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-lg border border-border p-4">
+                      <p className="text-xs text-muted-foreground">Sezioni scrutinate</p>
+                      <p className="mt-1 text-2xl font-bold tabular-nums">
+                        {risultatiNazionali.sezioniScrutinate.toLocaleString("it-IT")}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-border p-4">
+                      <p className="text-xs text-muted-foreground">Sezioni totali</p>
+                      <p className="mt-1 text-2xl font-bold tabular-nums">
+                        {risultatiNazionali.sezioniTotali.toLocaleString("it-IT")}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="rounded-lg bg-secondary/40 p-4 text-sm text-muted-foreground">
+                    {risultatiNazionali.ultimoAggiornamento
+                      ? `Ultimo aggiornamento: ${risultatiNazionali.ultimoAggiornamento}`
+                      : "In attesa dei primi aggiornamenti di scrutinio da Eligendo."}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Quadro regionale</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+                  <span className="rounded-full bg-emerald-500/10 px-2 py-1 text-emerald-700">Verde: vantaggio Sì</span>
+                  <span className="rounded-full bg-red-500/10 px-2 py-1 text-red-700">Rosso: vantaggio No</span>
+                  <span className="rounded-full bg-secondary px-2 py-1">Grigio: dati non disponibili</span>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {risultatiRegionaliOrdinati.map((regione) => (
+                    <div key={regione.regione} className="rounded-lg border border-border p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold">{regione.regione}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {regione.sezioniScrutinate.toLocaleString("it-IT")} / {regione.sezioniTotali.toLocaleString("it-IT")} sezioni
+                          </p>
+                        </div>
+                        <Badge variant="outline" className={getWinnerBadgeClass(regione.vincitore)}>
+                          {regione.vincitore}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Sì</p>
+                          <p className="font-semibold text-emerald-600">{formatPercent(regione.siPercentuale)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">No</p>
+                          <p className="font-semibold text-red-600">{formatPercent(regione.noPercentuale)}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>Scrutinio</span>
+                          <span>{regione.percentualeSezioniScrutinate.toFixed(2)}%</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                          <div
+                            className={`h-full transition-all ${
+                              regione.vincitore === "SI"
+                                ? "bg-emerald-500"
+                                : regione.vincitore === "NO"
+                                  ? "bg-red-500"
+                                  : "bg-muted-foreground/40"
+                            }`}
+                            style={{ width: `${Math.min(regione.percentualeSezioniScrutinate, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="rounded-lg border border-dashed border-border bg-secondary/20 p-4 text-sm text-muted-foreground">
+                  Questa sezione è già pronta per una cartina dell'Italia colorata regione per regione. Per farla bene ci manca solo una base SVG o GeoJSON affidabile e l'endpoint live dei risultati regionali.
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="hidden">
               <CardContent className="p-8 text-center space-y-4">
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
                   <Timer className="w-8 h-8 text-primary" />
@@ -793,7 +1013,7 @@ export default function Dashboard() {
             </Card>
 
             {/* Struttura preparata per i risultati */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 opacity-40 pointer-events-none">
+            <div className="hidden grid grid-cols-1 lg:grid-cols-2 gap-6 opacity-40 pointer-events-none">
               <Card>
                 <CardHeader className="pb-2"><CardTitle className="text-sm">Risultati per regione</CardTitle></CardHeader>
                 <CardContent className="h-48 flex items-center justify-center text-muted-foreground text-sm">

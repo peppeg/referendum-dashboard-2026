@@ -109,6 +109,67 @@ export const affluenzaCitta: AffluenzaCitta[] = [
   { citta: "Palermo", affluenzaOre12: 10.70, affluenzaOre19: 30.27, affluenzaOre23: 36.20 },
 ];
 
+export interface RisultatiNazionali {
+  stato: "in-attesa" | "in-corso" | "completato";
+  siPercentuale: number | null;
+  noPercentuale: number | null;
+  sezioniScrutinate: number;
+  sezioniTotali: number;
+  percentualeSezioniScrutinate: number;
+  ultimoAggiornamento: string | null;
+}
+
+export interface RisultatoRegione {
+  regione: string;
+  siPercentuale: number | null;
+  noPercentuale: number | null;
+  sezioniScrutinate: number;
+  sezioniTotali: number;
+  percentualeSezioniScrutinate: number;
+  vincitore: "SI" | "NO" | "PARITA" | "N/D";
+}
+
+export const risultatiNazionali: RisultatiNazionali = {
+  stato: "in-attesa",
+  siPercentuale: null,
+  noPercentuale: null,
+  sezioniScrutinate: 0,
+  sezioniTotali: referendumInfo.sezioniTotali,
+  percentualeSezioniScrutinate: 0,
+  ultimoAggiornamento: null,
+};
+
+export const risultatiRegionali: RisultatoRegione[] = [
+  "Piemonte",
+  "Valle d'Aosta",
+  "Lombardia",
+  "Trentino-Alto Adige",
+  "Veneto",
+  "Friuli Venezia Giulia",
+  "Liguria",
+  "Emilia-Romagna",
+  "Toscana",
+  "Umbria",
+  "Marche",
+  "Lazio",
+  "Abruzzo",
+  "Molise",
+  "Campania",
+  "Puglia",
+  "Basilicata",
+  "Calabria",
+  "Sicilia",
+  "Sardegna",
+].map((regione) => ({
+  regione,
+  siPercentuale: null,
+  noPercentuale: null,
+  sezioniScrutinate: 0,
+  sezioniTotali: 0,
+  percentualeSezioniScrutinate: 0,
+  vincitore: "N/D" as const,
+}));
+
 // Confronto con referendum precedenti
 export interface ReferendumStorico {
   anno: number;

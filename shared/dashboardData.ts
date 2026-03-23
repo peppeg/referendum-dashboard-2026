@@ -6,6 +6,8 @@ import {
   puntiChiave,
   propensionePartiti,
   referendumInfo,
+  risultatiNazionali,
+  risultatiRegionali,
   referendumStorici,
   sondaggi,
   timelineEventi,
@@ -14,6 +16,8 @@ import {
   type AffluenzaRilevazione,
   type PropensionePartito,
   type ReferendumStorico,
+  type RisultatiNazionali,
+  type RisultatoRegione,
   type Sondaggio,
 } from "./referendumData.js";
 
@@ -50,6 +54,8 @@ export type DashboardData = {
     ore23: number;
     diff2025: string;
   }>;
+  risultatiNazionali: RisultatiNazionali;
+  risultatiRegionali: RisultatoRegione[];
   timelineEventi: Array<{
     data: string;
     evento: string;
@@ -60,6 +66,7 @@ export type DashboardData = {
 
 export type DashboardDataPatch = Partial<DashboardData> & {
   referendumInfo?: Partial<DashboardData["referendumInfo"]>;
+  risultatiNazionali?: Partial<DashboardData["risultatiNazionali"]>;
 };
 
 export const dashboardSeedData: DashboardData = {
@@ -72,6 +79,8 @@ export const dashboardSeedData: DashboardData = {
   sondaggi,
   propensionePartiti,
   affluenzaPerArea: [...affluenzaPerArea],
+  risultatiNazionali: { ...risultatiNazionali },
+  risultatiRegionali: [...risultatiRegionali],
   timelineEventi,
   proiezioneYoodata: 60,
   proiezioneIpsos: 49,
@@ -96,6 +105,9 @@ export function isDashboardData(value: unknown): value is DashboardData {
     Array.isArray(candidate.sondaggi) &&
     Array.isArray(candidate.propensionePartiti) &&
     Array.isArray(candidate.affluenzaPerArea) &&
+    !!candidate.risultatiNazionali &&
+    typeof candidate.risultatiNazionali === "object" &&
+    Array.isArray(candidate.risultatiRegionali) &&
     Array.isArray(candidate.timelineEventi)
   );
 }
@@ -121,6 +133,13 @@ export function mergeDashboardData(
     sondaggi: patch.sondaggi ?? base.sondaggi,
     propensionePartiti: patch.propensionePartiti ?? base.propensionePartiti,
     affluenzaPerArea: patch.affluenzaPerArea ?? base.affluenzaPerArea,
+    risultatiNazionali: patch.risultatiNazionali
+      ? {
+          ...base.risultatiNazionali,
+          ...patch.risultatiNazionali,
+        }
+      : base.risultatiNazionali,
+    risultatiRegionali: patch.risultatiRegionali ?? base.risultatiRegionali,
     timelineEventi: patch.timelineEventi ?? base.timelineEventi,
     proiezioneYoodata: patch.proiezioneYoodata ?? base.proiezioneYoodata,
     proiezioneIpsos: patch.proiezioneIpsos ?? base.proiezioneIpsos,
