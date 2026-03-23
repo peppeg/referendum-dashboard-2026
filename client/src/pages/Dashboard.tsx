@@ -263,8 +263,8 @@ export default function Dashboard() {
   // Chart data prep
   const regioniSorted = [...affluenzaRegioni].sort(
     (a, b) =>
-      (b.affluenzaOre23 || b.affluenzaOre19 || b.affluenzaOre12) -
-      (a.affluenzaOre23 || a.affluenzaOre19 || a.affluenzaOre12),
+      (b.affluenzaOre15 ?? b.affluenzaOre23 ?? b.affluenzaOre19 ?? b.affluenzaOre12) -
+      (a.affluenzaOre15 ?? a.affluenzaOre23 ?? a.affluenzaOre19 ?? a.affluenzaOre12),
   );
 
   const confrontoOre12 = referendumStorici.map((r) => ({
@@ -300,7 +300,7 @@ export default function Dashboard() {
 
   const afflAreaChart = affluenzaPerArea.map((a) => ({
     area: a.area,
-    affluenza: a.ore23 || a.ore19 || a.ore12,
+    affluenza: a.ore15 ?? a.ore23 ?? a.ore19 ?? a.ore12,
     fill: AREA_COLORS[a.area] || "#888",
   }));
 
@@ -528,6 +528,7 @@ export default function Dashboard() {
                       <th className="text-right py-2 px-2 font-semibold text-muted-foreground">Ore 12</th>
                       <th className="text-right py-2 px-2 font-semibold text-muted-foreground">Ore 19</th>
                       <th className="text-right py-2 px-2 font-semibold text-muted-foreground">Ore 23</th>
+                      <th className="text-right py-2 px-2 font-semibold text-muted-foreground">Lun 15</th>
                       <th className="py-2 px-2 font-semibold text-muted-foreground text-left" style={{ width: "30%" }}>Barra</th>
                     </tr>
                   </thead>
@@ -548,12 +549,15 @@ export default function Dashboard() {
                         <td className="py-1.5 px-2 text-right tabular-nums font-semibold">
                           {r.affluenzaOre23 ? `${r.affluenzaOre23}%` : "—"}
                         </td>
+                        <td className="py-1.5 px-2 text-right tabular-nums font-semibold">
+                          {r.affluenzaOre15 ? `${r.affluenzaOre15}%` : "â€”"}
+                        </td>
                         <td className="py-1.5 px-2">
                           <div className="w-full bg-secondary rounded-full h-2">
                             <div
                               className="h-2 rounded-full transition-all"
                               style={{
-                                width: `${Math.min((r.affluenzaOre23 || r.affluenzaOre19 || r.affluenzaOre12) / 60 * 100, 100)}%`,
+                                width: `${Math.min((r.affluenzaOre15 ?? r.affluenzaOre23 ?? r.affluenzaOre19 ?? r.affluenzaOre12) / 60 * 100, 100)}%`,
                                 backgroundColor: AREA_COLORS[r.area],
                               }}
                             />
@@ -578,9 +582,10 @@ export default function Dashboard() {
                     <XAxis dataKey="citta" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" angle={-30} textAnchor="end" height={50} />
                     <YAxis unit="%" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                     <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
-                    <Bar dataKey="affluenzaOre12" name="Ore 12" fill="hsl(var(--chart-1))" fillOpacity={0.4} radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="affluenzaOre19" name="Ore 19" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="affluenzaOre23" name="Ore 23" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="affluenzaOre12" name="Dom 12" fill="hsl(var(--chart-1))" fillOpacity={0.35} radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="affluenzaOre19" name="Dom 19" fill="hsl(var(--chart-1))" fillOpacity={0.7} radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="affluenzaOre23" name="Dom 23" fill="hsl(var(--chart-2))" fillOpacity={0.8} radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="affluenzaOre15" name="Lun 15" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -699,6 +704,12 @@ export default function Dashboard() {
                 <p className="text-[10px] text-muted-foreground mt-2">
                   Tutti i referendum costituzionali non richiedono quorum. L'esito è determinato dalla maggioranza dei voti validi.
                 </p>
+                <p className="hidden">
+                  Alle 15:00 di lunedÃ¬ 23 marzo 2026 l'affluenza si attesta al 58.93% con 61.531 sezioni su 61.533. Il dato Ã¨ ormai sostanzialmente definitivo.
+                </p>
+                <p className="hidden">
+                  Alle 15:00 di lunedi 23 marzo 2026 l'affluenza si attesta al 58.93% con 61.531 sezioni su 61.533. Il dato e ormai sostanzialmente definitivo.
+                </p>
               </CardContent>
             </Card>
 
@@ -762,8 +773,14 @@ export default function Dashboard() {
                   </ResponsiveContainer>
                   <div className="mt-3 p-3 rounded-lg bg-secondary/50 space-y-1">
                     <p className="text-xs font-semibold flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Insight chiave</p>
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="hidden">
                       Alle 23:00 di domenica l'affluenza nazionale è al 46.07%, già oltre lo scenario base Ipsos (42%). Resta ora la finestra di voto di lunedì 23 marzo 2026 dalle 07:00 alle 15:00, prima dell'avvio dello scrutinio.
+                    </p>
+                    <p className="hidden">
+                      Alle 15:00 di lunedÃ¬ 23 marzo 2026 l'affluenza nazionale si attesta al 58.93%, in linea con la proiezione Yoodata (~60%) e ben sopra lo scenario massimo Ipsos (49%).
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Alle 15:00 di lunedi 23 marzo 2026 l'affluenza nazionale si attesta al 58.93%, in linea con la proiezione Yoodata (~60%) e ben sopra lo scenario massimo Ipsos (49%).
                     </p>
                   </div>
                 </CardContent>
@@ -862,7 +879,7 @@ export default function Dashboard() {
                     <p className="text-[10px] text-muted-foreground mt-1">Scenario alta partecipazione</p>
                   </div>
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-3 text-center">
+                <p className="hidden">
                   Alle 23:00 di domenica l'affluenza è al 46.07%. Lunedì 23 marzo 2026 i seggi riaprono alle 07:00 e chiudono alle 15:00, quando inizierà anche lo scrutinio.
                 </p>
               </CardContent>
@@ -1051,9 +1068,6 @@ export default function Dashboard() {
                       </div>
                     </div>
                   ))}
-                </div>
-                <div className="rounded-lg border border-dashed border-border bg-secondary/20 p-4 text-sm text-muted-foreground">
-                  Questa sezione è già pronta per una cartina dell'Italia colorata regione per regione. Per farla bene ci manca solo una base SVG o GeoJSON affidabile e l'endpoint live dei risultati regionali.
                 </div>
               </CardContent>
             </Card>

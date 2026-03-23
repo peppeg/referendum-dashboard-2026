@@ -52,6 +52,7 @@ export type DashboardData = {
     ore12: number;
     ore19: number;
     ore23: number;
+    ore15?: number;
     diff2025: string;
   }>;
   risultatiNazionali: RisultatiNazionali;
