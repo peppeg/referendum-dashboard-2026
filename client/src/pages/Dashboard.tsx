@@ -105,6 +105,32 @@ function getWinnerBadgeClass(vincitore: "SI" | "NO" | "PARITA" | "N/D") {
   }
 }
 
+function mixHexColors(baseHex: string, targetHex: string, weight: number) {
+  const normalizedBase = baseHex.replace("#", "");
+  const normalizedTarget = targetHex.replace("#", "");
+  if (normalizedBase.length !== 6 || normalizedTarget.length !== 6) {
+    return baseHex;
+  }
+
+  const mixChannel = (start: number, end: number) =>
+    Math.round(start + (end - start) * weight)
+      .toString(16)
+      .padStart(2, "0");
+
+  const baseChannels = [
+    Number.parseInt(normalizedBase.slice(0, 2), 16),
+    Number.parseInt(normalizedBase.slice(2, 4), 16),
+    Number.parseInt(normalizedBase.slice(4, 6), 16),
+  ];
+  const targetChannels = [
+    Number.parseInt(normalizedTarget.slice(0, 2), 16),
+    Number.parseInt(normalizedTarget.slice(2, 4), 16),
+    Number.parseInt(normalizedTarget.slice(4, 6), 16),
+  ];
+
+  return `#${mixChannel(baseChannels[0], targetChannels[0])}${mixChannel(baseChannels[1], targetChannels[1])}${mixChannel(baseChannels[2], targetChannels[2])}`;
+}
+
 function getRomeDateParts(date = new Date()) {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Rome",
@@ -268,7 +294,8 @@ export default function Dashboard() {
     si: p.orientamentoSi,
     no: p.orientamentoNo,
     propensione: p.propensioneVoto,
-    fill: p.colore,
+    siFill: mixHexColors(p.colore, "ffffff", 0.18),
+    noFill: mixHexColors(p.colore, "111827", 0.24),
   }));
 
   const afflAreaChart = affluenzaPerArea.map((a) => ({
@@ -460,7 +487,17 @@ export default function Dashboard() {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis type="number" unit="%" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                       <YAxis dataKey="area" type="category" tick={{ fontSize: 11 }} width={80} stroke="hsl(var(--muted-foreground))" />
-                      <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+                      <Tooltip
+                        contentStyle={{
+                          background: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: 8,
+                          fontSize: 12,
+                          color: "hsl(var(--foreground))",
+                        }}
+                        labelStyle={{ color: "hsl(var(--foreground))" }}
+                        itemStyle={{ color: "hsl(var(--foreground))" }}
+                      />
                       <Bar dataKey="affluenza" name="Affluenza %" radius={[0, 4, 4, 0]}>
                         {afflAreaChart.map((entry, i) => (
                           <Cell key={i} fill={entry.fill} />
@@ -593,7 +630,17 @@ export default function Dashboard() {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis type="number" unit="%" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" domain={[0, 100]} />
                       <YAxis dataKey="anno" type="category" tick={{ fontSize: 11 }} width={40} stroke="hsl(var(--muted-foreground))" />
-                      <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+                      <Tooltip
+                        contentStyle={{
+                          background: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: 8,
+                          fontSize: 12,
+                          color: "hsl(var(--foreground))",
+                        }}
+                        labelStyle={{ color: "hsl(var(--foreground))" }}
+                        itemStyle={{ color: "hsl(var(--foreground))" }}
+                      />
                       <Bar dataKey="si" stackId="a" fill="hsl(145, 55%, 38%)" name="Sì %" radius={[0, 0, 0, 0]} />
                       <Bar dataKey="no" stackId="a" fill="hsl(0, 72%, 50%)" name="No %" radius={[0, 4, 4, 0]} />
                     </BarChart>
@@ -698,7 +745,17 @@ export default function Dashboard() {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis type="number" unit="%" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" domain={[40, 60]} />
                       <YAxis dataKey="scenario" type="category" tick={{ fontSize: 9 }} width={150} stroke="hsl(var(--muted-foreground))" />
-                      <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+                      <Tooltip
+                        contentStyle={{
+                          background: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: 8,
+                          fontSize: 12,
+                          color: "hsl(var(--foreground))",
+                        }}
+                        labelStyle={{ color: "hsl(var(--foreground))" }}
+                        itemStyle={{ color: "hsl(var(--foreground))" }}
+                      />
                       <Bar dataKey="si" fill="hsl(145, 55%, 38%)" name="Sì %" radius={[0, 0, 0, 0]} />
                       <Bar dataKey="no" fill="hsl(0, 72%, 50%)" name="No %" radius={[0, 4, 4, 0]} />
                     </BarChart>
@@ -723,9 +780,27 @@ export default function Dashboard() {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="partito" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                       <YAxis unit="%" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" domain={[0, 100]} />
-                      <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
-                      <Bar dataKey="si" stackId="a" fill="hsl(145, 55%, 38%)" name="Sì %" />
-                      <Bar dataKey="no" stackId="a" fill="hsl(0, 72%, 50%)" name="No %" />
+                      <Tooltip
+                        contentStyle={{
+                          background: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: 8,
+                          fontSize: 12,
+                          color: "hsl(var(--foreground))",
+                        }}
+                        labelStyle={{ color: "hsl(var(--foreground))" }}
+                        itemStyle={{ color: "hsl(var(--foreground))" }}
+                      />
+                      <Bar dataKey="si" stackId="a" name="Sì %" radius={[0, 0, 0, 0]}>
+                        {partitiBarData.map((entry) => (
+                          <Cell key={`${entry.partito}-si`} fill={entry.siFill} />
+                        ))}
+                      </Bar>
+                      <Bar dataKey="no" stackId="a" name="No %" radius={[4, 4, 0, 0]}>
+                        {partitiBarData.map((entry) => (
+                          <Cell key={`${entry.partito}-no`} fill={entry.noFill} />
+                        ))}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                   <p className="text-[10px] text-muted-foreground mt-2">Fonte: Ipsos Doxa / YouTrend — Febbraio-Marzo 2026</p>
