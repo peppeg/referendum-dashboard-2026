@@ -2,6 +2,7 @@ import { Switch, Route, Router } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Dashboard from "@/pages/Dashboard";
@@ -24,6 +25,7 @@ function App() {
         <Router hook={useHashLocation}>
           <AppRouter />
         </Router>
+        <Analytics />
       </TooltipProvider>
     </QueryClientProvider>
   );
