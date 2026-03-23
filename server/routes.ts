@@ -8,7 +8,6 @@ import {
   type DashboardDataPatch,
 } from "../shared/dashboardData.js";
 
-const LEGACY_MANUAL_TOKEN = "AggiornaSubito2026";
 const ELEAPI_BASE_URL = "https://eleapi.interno.gov.it/siel/PX";
 const RESULTS_CACHE_MS = 15_000;
 
@@ -200,17 +199,22 @@ async function loadLiveResults() {
 }
 
 function getRefreshToken() {
-  return process.env.DASHBOARD_REFRESH_TOKEN || LEGACY_MANUAL_TOKEN;
+  const value = process.env.DASHBOARD_REFRESH_TOKEN?.trim();
+  return value ? value : null;
 }
 
 function isAuthorizedRefreshRequest(req: Request) {
   const expectedToken = getRefreshToken();
+  if (!expectedToken) {
+    return false;
+  }
+
   const bearerHeader = req.header("authorization");
   const bearerToken = bearerHeader?.startsWith("Bearer ")
     ? bearerHeader.slice("Bearer ".length)
     : undefined;
 
-  return req.query.token === expectedToken || bearerToken === expectedToken;
+  return bearerToken === expectedToken;
 }
 
 export async function registerRoutes(
@@ -231,27 +235,28 @@ export async function registerRoutes(
     }
   });
 
-  // Secret endpoint to update data (e.g. POST /api/dashboard?token=SECRET)
-  app.post("/api/dashboard", (req, res) => {
-    if (!isAuthorizedRefreshRequest(req)) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+  if (getRefreshToken()) {
+    app.post("/api/dashboard", (req, res) => {
+      if (!isAuthorizedRefreshRequest(req)) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
 
-    const payload = req.body as DashboardData | DashboardDataPatch;
-    if (!payload || typeof payload !== "object") {
-      return res.status(400).json({ error: "Invalid payload" });
-    }
+      const payload = req.body as DashboardData | DashboardDataPatch;
+      if (!payload || typeof payload !== "object") {
+        return res.status(400).json({ error: "Invalid payload" });
+      }
 
-    liveData = isDashboardData(payload)
-      ? payload
-      : mergeDashboardData(liveData, payload);
-    resultsCache = undefined;
+      liveData = isDashboardData(payload)
+        ? payload
+        : mergeDashboardData(liveData, payload);
+      resultsCache = undefined;
 
-    res.json({
-      success: true,
-      liveData,
+      res.json({
+        success: true,
+        liveData,
+      });
     });
-  });
+  }
 
   return httpServer || app;
 }
